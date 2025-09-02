@@ -6,10 +6,55 @@ const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const VALUES = { 'A': 11, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10 };
 
-const createDeck = () => {
-  return SUITS.flatMap(suit =>
-    RANKS.map(rank => ({ suit, rank, value: VALUES[rank] }))
-  );
+// --- Database Utility Functions ---
+async function saveThingsToDatabase(endpoint, data) {
+  //let apiUrl = 'https://game-api-zjod.onrender.com/api/' + endpoint;
+  let apiUrl = 'http://localhost:3001/api/' + endpoint;
+  try {
+    console.log(`Sending batch of ${data.length} games to ${endpoint}...`);
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data), // Send the array directly
+    });
+    if (!response.ok) throw new Error('Failed to save game batch');
+    const result = await response.json();
+    console.log("API Response:", result);
+    return result;
+  } catch (err) {
+    console.error('Error saving game batch:', err.message || err);
+  }
+}
+
+async function loadThingsFromDatabase(endpoint, ...params) {
+  try {
+    //const apiUrl = `https://game-api-zjod.onrender.com/api/${endpoint}/${params.join('/')}`;
+    const apiUrl = `http://localhost:3001/api/${endpoint}/${params.join('/')}`;
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error loading data from database:', error);
+    return null;
+  }
+}
+
+
+const createDeck = (numDecks = 6) => {
+  let multiDeck = [];
+  for (let i = 0; i < numDecks; i++) {
+    const singleDeck = SUITS.flatMap(suit =>
+      RANKS.map(rank => ({ suit, rank, value: VALUES[rank] }))
+    );
+    multiDeck.push(...singleDeck);
+  }
+  return multiDeck;
 };
 
 const shuffleDeck = (deck) => {
@@ -171,6 +216,11 @@ export default function App() {
   const [isGameResolved, setIsGameResolved] = React.useState(false);
   const [activeHandIndex, setActiveHandIndex] = React.useState(0);
 
+  // --- BATCHING LOGIC START ---
+  // State to hold game data before sending to the API
+  const [gameDataBuffer, setGameDataBuffer] = React.useState([]);
+  // --- BATCHING LOGIC END ---
+
   const playerScores = React.useMemo(() => playerHands.map(calculateScore), [playerHands]);
   const dealerScore = React.useMemo(() => calculateScore(dealerHand), [dealerHand]);
   const dealerVisibleScore = React.useMemo(() => calculateScore(dealerHand.slice(1)), [dealerHand]);
@@ -245,6 +295,8 @@ export default function App() {
     setGameHistory([]);
     setIsGameResolved(false);
     setActiveHandIndex(0);
+    // --- BATCHING LOGIC ---
+    setGameDataBuffer([]); // Clear the buffer on reset
   };
 
   const toggleAutoPlay = () => {
@@ -270,7 +322,7 @@ export default function App() {
       setGameState('player');
     }, 500);
     return () => clearTimeout(timer);
-  }, [gameState]);
+  }, [gameState, deck]);
 
   // Player's Turn Logic
   React.useEffect(() => {
@@ -368,7 +420,6 @@ export default function App() {
 
     setStatus(roundResults.join(' | '));
 
-    // --- Game History & API Payload Generation ---
     const gameId = new Date().getTime();
     const finalResult = newWins > newLosses ? 'Player' : (newLosses > newWins ? 'Dealer' : 'Push');
 
@@ -403,11 +454,22 @@ export default function App() {
       }
     };
 
-    // Pencil in the call to your Game API here
-    console.log('Game API Payload:', JSON.stringify(gameApiPayload, null, 2));
+    // --- BATCHING LOGIC ---
+    // Add the new game data to the buffer instead of sending it immediately
+    setGameDataBuffer(prev => [...prev, gameApiPayload]);
 
     setIsGameResolved(true);
-  }, [gameState, isGameResolved, playerScores, dealerScore, playerHands, currentBet, wallet]);
+  }, [gameState, isGameResolved, playerScores, dealerScore, playerHands, currentBet, wallet, totalMoneyLost, totalMoneyWon]);
+
+  // --- BATCHING LOGIC START ---
+  // Effect to send data when the buffer is full
+  React.useEffect(() => {
+    if (gameDataBuffer.length >= 10) {
+      saveThingsToDatabase('postBlackjackGames', gameDataBuffer);
+      setGameDataBuffer([]); // Clear the buffer after sending
+    }
+  }, [gameDataBuffer]);
+  // --- BATCHING LOGIC END ---
 
   // Continuous Play Controller
   React.useEffect(() => {
@@ -468,6 +530,4 @@ export default function App() {
     </div>
   );
 }
-
-
 
