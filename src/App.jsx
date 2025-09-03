@@ -8,8 +8,8 @@ const VALUES = { 'A': 11, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8
 
 // --- Database Utility Functions ---
 async function saveThingsToDatabase(endpoint, data) {
-  //let apiUrl = 'https://game-api-zjod.onrender.com/api/' + endpoint;
-  let apiUrl = 'http://localhost:3001/api/' + endpoint;
+  let apiUrl = 'https://game-api-zjod.onrender.com/api/' + endpoint;
+  //let apiUrl = 'http://localhost:3001/api/' + endpoint;
   try {
     console.log(`Sending batch of ${data.length} games to ${endpoint}...`);
     const response = await fetch(apiUrl, {
@@ -28,8 +28,8 @@ async function saveThingsToDatabase(endpoint, data) {
 
 async function loadThingsFromDatabase(endpoint, ...params) {
   try {
-    //const apiUrl = `https://game-api-zjod.onrender.com/api/${endpoint}/${params.join('/')}`;
-    const apiUrl = `http://localhost:3001/api/${endpoint}/${params.join('/')}`;
+    const apiUrl = `https://game-api-zjod.onrender.com/api/${endpoint}/${params.join('/')}`;
+    //const apiUrl = `http://localhost:3001/api/${endpoint}/${params.join('/')}`;
     const response = await fetch(apiUrl, {
       headers: {
         'Cache-Control': 'no-cache',
