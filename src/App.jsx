@@ -1,5 +1,9 @@
+import Hand from '@components/Hand';
 import React from 'react';
-
+import BettingInfo from './components/BettingInfo';
+import GameHistory from './components/GameHistory';
+import GameStatus from './components/GameStatus';
+import Scoreboard from './components/Scoreboard';
 // --- Helper Functions & Data ---
 
 const SUITS = ['♠', '♥', '♦', '♣'];
@@ -77,126 +81,10 @@ const calculateScore = (hand) => {
   return score;
 };
 
-// --- React Components ---
 
-const Card = ({ suit, rank, isHidden, small = false }) => {
-  const isRed = suit === '♥' || suit === '♦';
 
-  if (small) {
-    return <span className={`font-bold ${isRed ? 'text-red-500' : 'text-gray-200'}`}>{rank}{suit}</span>;
-  }
 
-  if (isHidden) {
-    return <div className="w-20 h-28 md:w-24 md:h-36 rounded-lg bg-gradient-to-br from-blue-700 to-blue-900 border-2 border-white shadow-lg mx-1"></div>;
-  }
-  return (
-    <div className={`w-20 h-28 md:w-24 md:h-36 rounded-lg bg-white flex flex-col justify-between p-1 shadow-lg mx-1 transition-transform duration-300 transform hover:scale-105 ${isRed ? 'text-red-600' : 'text-black'}`}>
-      <div className="text-left text-xl font-bold">
-        <div>{rank}</div>
-        <div>{suit}</div>
-      </div>
-      <div className="text-right text-xl font-bold transform rotate-180">
-        <div>{rank}</div>
-        <div>{suit}</div>
-      </div>
-    </div>
-  );
-};
 
-const Hand = ({ title, cards, score, isDealer, hideFirstCard, isActive = false }) => (
-  <div className={`my-2 p-2 rounded-lg ${isActive ? 'border-2 border-yellow-400 shadow-lg' : ''}`}>
-    <h2 className="text-lg md:text-xl font-bold text-yellow-200 mb-1 text-center">{title} ({cards.length} cards) - Score: {score > 0 ? score : ''}</h2>
-    <div className="flex justify-center items-center min-h-[120px] md:min-h-[150px]">
-      {cards.map((card, index) => (
-        <Card
-          key={index}
-          suit={card.suit}
-          rank={card.rank}
-          isHidden={isDealer && index === 0 && hideFirstCard}
-        />
-      ))}
-    </div>
-  </div>
-);
-
-const Scoreboard = ({ wins, losses, totalLost, totalWon }) => (
-  <div className="flex flex-wrap justify-center gap-4 items-center text-center mt-2 text-md md:text-lg font-semibold">
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-green-400">Wins:</span>
-      <span className="ml-2 text-white">{wins}</span>
-    </div>
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-red-400">Losses:</span>
-      <span className="ml-2 text-white">{losses}</span>
-    </div>
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-orange-400">Total Lost:</span>
-      <span className="ml-2 text-white">${totalLost}</span>
-    </div>
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-teal-400">Total Won:</span>
-      <span className="ml-2 text-white">${totalWon}</span>
-    </div>
-  </div>
-);
-
-const GameStatus = ({ status }) => {
-  let bgColor = 'bg-gray-700';
-  if (status.includes('Win') || status.includes('Blackjack')) bgColor = 'bg-green-600';
-  if (status.includes('Bust') || status.includes('Lose')) bgColor = 'bg-red-600';
-  if (status.includes('Push')) bgColor = 'bg-blue-600';
-
-  return (
-    <div className="flex justify-center my-2">
-      <div className={`text-center text-lg font-bold px-4 py-2 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
-        {status}
-      </div>
-    </div>
-  );
-};
-
-const BettingInfo = ({ wallet, bet }) => (
-  <div className="flex justify-around items-center text-center my-2 text-md md:text-lg font-semibold">
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-yellow-300">Wallet:</span>
-      <span className="ml-2 text-white">${wallet}</span>
-    </div>
-    <div className="bg-gray-900 bg-opacity-50 px-3 py-1 rounded-lg">
-      <span className="text-yellow-300">Current Bet:</span>
-      <span className="ml-2 text-white">${bet > 0 ? bet : '--'}</span>
-    </div>
-  </div>
-);
-
-const GameHistory = ({ history }) => (
-  <div className="mt-4 w-full max-w-4xl mx-auto">
-    <h3 className="text-xl font-bold text-yellow-200 text-center mb-2">Game History</h3>
-    <div className="bg-gray-900 bg-opacity-50 rounded-lg p-2 max-h-48 overflow-y-auto">
-      {history.length === 0 ? <p className="text-center text-gray-400">No games played yet.</p> :
-        history.map((game, index) => {
-          let resultColor = 'text-blue-400';
-          if (game.winner === 'Player') resultColor = 'text-green-400';
-          if (game.winner === 'Dealer') resultColor = 'text-red-400';
-          return (
-            <div key={game.id} className={`flex justify-between items-start p-2 text-sm ${index > 0 ? 'border-t border-gray-700' : ''}`}>
-              <div className={`${resultColor} font-bold w-1/4`}>{game.winner}</div>
-              <div className="w-1/2">
-                {game.playerHands.map((hand, i) => (
-                  <p key={i}>Hand {i + 1} ({hand.length} cards): ({calculateScore(hand)}) {hand.map((c, j) => <Card key={j} {...c} small />)}</p>
-                ))}
-                <p>Dealer ({game.dealerHand.length} cards): ({game.dealerScore}) {game.dealerHand.map((c, i) => <Card key={i} {...c} small />)}</p>
-              </div>
-              <div className="w-1/4 text-right">
-                <div>Bet: ${game.bet}</div>
-                <div className="font-semibold text-yellow-300">Wallet: ${game.wallet}</div>
-              </div>
-            </div>
-          );
-        })
-      }
-    </div>
-  </div>
-);
 
 
 export default function App() {
@@ -480,10 +368,16 @@ export default function App() {
   }, [gameState, isPlaying, wallet]);
 
   return (
+
+
+
+
+
+
     <div className="bg-gray-800 flex flex-col items-center justify-center p-2 text-white font-sans min-h-screen">
       <div className="w-full max-w-4xl">
         <h1 className="text-3xl md:text-4xl font-bold text-center text-yellow-300 drop-shadow-lg mb-2">AI Blackjack</h1>
-        <Scoreboard wins={wins} losses={losses} totalLost={totalMoneyLost} totalWon={totalMoneyWon} />
+        <Scoreboard wins={wins} losses={losses} totalLost={totalMoneyLost} totalWon={totalMoneyWon} wallet={wallet} currentBet={currentBet} />
 
         <div className="bg-green-800 border-4 border-yellow-700 rounded-full p-2 md:p-4 shadow-xl">
           <Hand
