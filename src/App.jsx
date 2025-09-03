@@ -1,54 +1,15 @@
 import Hand from '@components/Hand';
 import React from 'react';
-import BettingInfo from './components/BettingInfo';
 import GameHistory from './components/GameHistory';
 import GameStatus from './components/GameStatus';
 import Scoreboard from './components/Scoreboard';
+import Header from './layouts/Header';
+import { saveThingsToDatabase } from './utils/storageUtils';
 // --- Helper Functions & Data ---
 
 const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const VALUES = { 'A': 11, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10 };
-
-// --- Database Utility Functions ---
-async function saveThingsToDatabase(endpoint, data) {
-  let apiUrl = 'https://game-api-zjod.onrender.com/api/' + endpoint;
-  //let apiUrl = 'http://localhost:3001/api/' + endpoint;
-  try {
-    console.log(`Sending batch of ${data.length} games to ${endpoint}...`);
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data), // Send the array directly
-    });
-    if (!response.ok) throw new Error('Failed to save game batch');
-    const result = await response.json();
-    console.log("API Response:", result);
-    return result;
-  } catch (err) {
-    console.error('Error saving game batch:', err.message || err);
-  }
-}
-
-async function loadThingsFromDatabase(endpoint, ...params) {
-  try {
-    const apiUrl = `https://game-api-zjod.onrender.com/api/${endpoint}/${params.join('/')}`;
-    //const apiUrl = `http://localhost:3001/api/${endpoint}/${params.join('/')}`;
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      }
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('Error loading data from database:', error);
-    return null;
-  }
-}
-
 
 const createDeck = (numDecks = 6) => {
   let multiDeck = [];
@@ -80,12 +41,6 @@ const calculateScore = (hand) => {
   }
   return score;
 };
-
-
-
-
-
-
 
 export default function App() {
   const [deck, setDeck] = React.useState([]);
@@ -367,60 +322,88 @@ export default function App() {
     }
   }, [gameState, isPlaying, wallet]);
 
+
+
   return (
 
+    <div>
+      <div className="container mx-auto p-4">
+        <Header />
+        <div class="grid grid-cols-[1fr_auto] gap-4 p-6 bg-white rounded-b-3xl shadow-sm mb-4">
 
 
+          <div class="flex flex-col gap-4">
 
 
-
-    <div className="bg-gray-800 flex flex-col items-center justify-center p-2 text-white font-sans min-h-screen">
-      <div className="w-full max-w-4xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-center text-yellow-300 drop-shadow-lg mb-2">AI Blackjack</h1>
-        <Scoreboard wins={wins} losses={losses} totalLost={totalMoneyLost} totalWon={totalMoneyWon} wallet={wallet} currentBet={currentBet} />
-
-        <div className="bg-green-800 border-4 border-yellow-700 rounded-full p-2 md:p-4 shadow-xl">
-          <Hand
-            title="Dealer's Hand"
-            cards={dealerHand}
-            score={gameState === 'dealer' || gameState === 'end' ? dealerScore : dealerVisibleScore}
-            isDealer={true}
-            hideFirstCard={gameState !== 'dealer' && gameState !== 'end'}
-          />
-
-          <BettingInfo wallet={wallet} bet={currentBet} />
-          <GameStatus status={status} />
-
-          <div className="flex justify-center items-start">
-            {playerHands.map((hand, index) => (
+            <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
               <Hand
-                key={index}
-                title={`Player Hand ${index + 1}`}
-                cards={hand}
-                score={playerScores[index]}
-                isActive={gameState === 'player' && index === activeHandIndex}
+                title="Dealer's Hand"
+                cards={dealerHand}
+                score={gameState === 'dealer' || gameState === 'end' ? dealerScore : dealerVisibleScore}
+                isDealer={true}
+                hideFirstCard={gameState !== 'dealer' && gameState !== 'end'}
               />
-            ))}
+            </div>
+
+
+            <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
+              {/* PLAYER'S HAND */}
+              {/* This is in a loop because there may be two hands on a split */}
+              <div className="flex justify-center items-start">
+                {playerHands.map((hand, index) => (
+                  <Hand
+                    key={index}
+                    title={`Player Hand ${index + 1}`}
+                    cards={hand}
+                    score={playerScores[index]}
+                    isActive={gameState === 'player' && index === activeHandIndex}
+                  />
+                ))}
+              </div>
+            </div>
+
           </div>
-        </div>
 
-        <div className="flex justify-center items-center gap-4 mt-4">
-          <button
-            onClick={toggleAutoPlay}
-            className={`px-6 py-3 font-bold text-lg rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 ${isPlaying ? 'bg-red-600 text-white' : 'bg-green-500 text-gray-900'}`}
-          >
-            {isPlaying ? 'Stop Auto-Play' : 'Start Auto-Play'}
-          </button>
 
-          <button
-            onClick={resetGame}
-            className="px-6 py-3 bg-yellow-500 text-gray-900 font-bold text-lg rounded-lg shadow-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105"
-          >
-            Reset Game
-          </button>
+          <div class="flex flex-col gap-4">
+
+
+            <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
+              <h3 class="font-semibold text-gray-800 text-left mb-2">Control Panel</h3>
+              <GameStatus status={status} />
+              <button
+                onClick={toggleAutoPlay}
+                className={`px-1 py-1 text-sm rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 ${isPlaying ? 'bg-red-600 text-white' : 'bg-green-500 text-gray-900'}`}
+              >
+                {isPlaying ? 'Stop Auto-Play' : 'Start Auto-Play'}
+              </button>
+              &nbsp;
+              <button
+                onClick={resetGame}
+                className="px-1 py-1 bg-yellow-500 text-gray-900 text-sm rounded-lg shadow-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105"
+              >
+                Reset Game
+              </button>
+            </div>
+
+
+            <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
+              <h3 class="font-semibold text-gray-800 text-left mb-2">Scoreboard</h3>
+              <Scoreboard wins={wins} losses={losses} totalLost={totalMoneyLost} totalWon={totalMoneyWon} wallet={wallet} currentBet={currentBet} />
+            </div>
+
+          </div>
+
+
+          <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc] col-span-2">
+            <h3 class="font-semibold text-gray-800 text-left mb-2">Game History</h3>
+            <GameHistory history={gameHistory} />
+          </div>
+
         </div>
-        <GameHistory history={gameHistory} />
       </div>
+
+
     </div>
   );
 }
