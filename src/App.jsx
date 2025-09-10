@@ -58,7 +58,7 @@ export default function App() {
   const [gameHistory, setGameHistory] = React.useState([]);
   const [isGameResolved, setIsGameResolved] = React.useState(false);
   const [activeHandIndex, setActiveHandIndex] = React.useState(0);
-
+  const [handResults, setHandResults] = React.useState({ player: [], dealer: null });
   // --- BATCHING LOGIC START ---
   // State to hold game data before sending to the API
   const [gameDataBuffer, setGameDataBuffer] = React.useState([]);
@@ -336,12 +336,15 @@ export default function App() {
 
 
             <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
+
               <Hand
                 title="Dealer's Hand"
                 cards={dealerHand}
                 score={gameState === 'dealer' || gameState === 'end' ? dealerScore : dealerVisibleScore}
                 isDealer={true}
                 hideFirstCard={gameState !== 'dealer' && gameState !== 'end'}
+                result={handResults.dealer?.result}      // <-- Passes the dealer's result
+                resultScore={handResults.dealer?.score}
               />
             </div>
 
@@ -349,7 +352,7 @@ export default function App() {
             <div class="bg-[#fffdf7] p-4 rounded-2xl shadow-md border-2 border-[#e2dccc]">
               {/* PLAYER'S HAND */}
               {/* This is in a loop because there may be two hands on a split */}
-              <div className="flex justify-center items-start">
+              <div className="flex items-start">
                 {playerHands.map((hand, index) => (
                   <Hand
                     key={index}
@@ -357,6 +360,8 @@ export default function App() {
                     cards={hand}
                     score={playerScores[index]}
                     isActive={gameState === 'player' && index === activeHandIndex}
+                    result={handResults.player[index]?.result}     // <-- Passes result for this specific hand
+                    resultScore={handResults.player[index]?.score} // <-- Passes score for this specific hand
                   />
                 ))}
               </div>
@@ -373,14 +378,14 @@ export default function App() {
               <GameStatus status={status} />
               <button
                 onClick={toggleAutoPlay}
-                className={`px-1 py-1 text-sm rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 ${isPlaying ? 'bg-red-600 text-white' : 'bg-green-500 text-gray-900'}`}
+                className={`px-3 py-1 rounded-lg border border-gray-700 text-sm shadow-lg transition-all duration-300 transform hover:scale-105 ${isPlaying ? 'bg-red-600 text-white' : 'bg-green-500 text-gray-900'}`}
               >
                 {isPlaying ? 'Stop Auto-Play' : 'Start Auto-Play'}
               </button>
               &nbsp;
               <button
                 onClick={resetGame}
-                className="px-1 py-1 bg-yellow-500 text-gray-900 text-sm rounded-lg shadow-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105"
+                className="px-3 py-1 rounded-lg border border-gray-700  bg-yellow-500 text-gray-900 text-sm shadow-lg hover:bg-yellow-400 transition-all duration-300 transform hover:scale-105"
               >
                 Reset Game
               </button>

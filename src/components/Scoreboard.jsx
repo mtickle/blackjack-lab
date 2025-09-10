@@ -6,7 +6,7 @@ const Scoreboard = ({ wins, losses, totalLost, totalWon, wallet, currentBet }) =
             <span className="">Wallet:</span>
             <span className="ml-2">${wallet}</span>
         </div>
-        <div className=" px-3 py-1 rounded-lg border border-gray-700 bg-slate-200">
+        <div className="px-3 py-1 rounded-lg border border-gray-700 bg-slate-200">
             <span className="">Current Bet:</span>
             <span className="ml-2">${currentBet}</span>
         </div>

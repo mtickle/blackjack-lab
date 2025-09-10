@@ -6,7 +6,7 @@ const GameStatus = ({ status }) => {
 
     return (
         <div className="flex justify-center my-2">
-            <div className={`text-center text-sm  px-4 py-2 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
+            <div className={`border border-gray-700 text-center text-sm  px-4 py-2 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
                 {status}
             </div>
         </div>
