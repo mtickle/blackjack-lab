@@ -5,6 +5,7 @@ export default function Hand({ title, cards, score, result, resultScore, isDeale
     let panelTitle, panelScore, panelStyles;
 
     // If a final result is passed, the hand is over.
+    console.log('Hand result:', result);
     if (result) {
         panelTitle = result.toUpperCase();
         panelScore = resultScore;
